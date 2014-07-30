@@ -72,8 +72,10 @@ if(require("gridExtra",quietly=T)){
 # 1a. Set the URL for the data
 url<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 
-# 1b. Conditionally create a directory in the working directory to store the data
+# 1bi. Conditionally create a directory in the working directory to store the data
 if(!file.exists("./data")){dir.create("./data",showWarnings = FALSE)}
+# 1bii. Conditionally create a directory in the working directory to store the plots
+if(!file.exists("./figures")){dir.create("./figures",showWarnings = FALSE)}
 
 # 1c. Download and unzip the data - download method conditional on operating system
 if(Sys.info()["sysname"]=="Windows"){setInternet2(use = TRUE)}
