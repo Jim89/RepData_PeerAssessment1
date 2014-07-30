@@ -66,6 +66,19 @@ if(require("gridExtra",quietly=T)){
     stop("could not install gridExtra")
   }
 }
+# 5. scales
+if(require("scales",quietly=T)){
+  print("loading scales")
+} else {
+  print("trying to install scales")
+  install.packages("scales")
+  library("scales",quietly=T)
+  print("scales installed and loaded")
+  if(require("scales",quietly=T)){
+  } else {
+    stop("could not install scales")
+  }
+}
 ################################################################################
 # Step 1 - Getting and loading the data
 ################################################################################
