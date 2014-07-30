@@ -1,0 +1,118 @@
+# Stepping Through Time
+### An analysis of personal movement data
+##### Jim Leach
+*******************************************************************************
+
+##### Introduction and Background
+This report has been created as part of the "Reproducible Research" MOOC offered by Johns Hopkins university on the Coursera website [here](https://class.coursera.org/repdata-004). 
+
+Briefly, the goal of this assignment was to take two month's worth of pedometer data for an anonymous individual and perform some brief summary and exploratory analysis on it in R. A full summary of the assigmnet can be found on the associated [GitHub repository](https://github.com/Jim89/RepData_PeerAssessment1). 
+
+The anaysis is broken down in to a number of steps, which are set out below:
+
+1. Load and process the data;
+2. Calculate and chart daily average steps;
+3. Calculate and chart the average steps in 5 minute intervals throughout the day;
+4. Impute missing values in the data set and repeat step 1 for the cleaned data; and
+5. Analyse differences in activity between weekdays and weekends.
+
+The following sections set out the approach taken to perform this analysis.
+
+*******************************************************************************
+
+##### Step 1 - Preparing the R working environment - Packages
+
+A number of packages have been used and are, therefore, required for this analysis. To make the code more reproducible, conditional installation and subsequent loading of these packages is performed as part of the working script. This is achieved using the following code:
+
+    if(require("package name here",quietly=T)){
+      print("loading "package name here"")
+    } else {
+      print("trying to install "package name here"")
+      install.packages(""package name here"")
+      library("package name here",quietly=T)
+      print(""package name here" installed and loaded")
+      if(require("package name here",quietly=T)){
+        } else {
+        stop("could not install "package name here"")
+      }
+    }
+    
+The packages used by this analysis are:
+
+* lubridate
+* dplyr
+* xtable
+* ggplot2
+* sqldf
+* gridExtra
+
+For more information about any of these packages please see the documentation using:
+
+    help(package="package name here")
+    
+    
+    
+For brevity, the conditional installation and loading of each package has been masked from this document.
+
+```{r echo=FALSE,results='hide',message=FALSE}
+library(lubridate,quietly=T)
+library(dplyr,quietly=T)
+library(xtable,quietly=T)
+library(ggplot2,quietly=T)
+library(sqldf,quietly=T)
+library(gridExtra,quietly=T)   
+```
+
+##### Step 2 - Getting and loading the data
+
+The data for this analysis are stored on the [course website](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip). The analysis has automated the download and loading of the data in to R. This is done using:
+```{r results='hide', warning=FALSE}
+# 2a. Set the URL for the data
+url<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+
+# 2b. Conditionally create a directory in the working directory to store the data 
+if(!file.exists("./data")){dir.create("./data",showWarnings = FALSE)}
+
+# 2c. Download and unzip the data - download method conditional on operating system
+if(Sys.info()["sysname"]=="Windows"){setInternet2(use = TRUE)}
+ifelse(Sys.info()["sysname"]=="Windows",
+       download.file(url=url,"./data/data.zip",quiet=TRUE),
+       download.file(url=url,"./data/data.zip",method="curl",quiet=TRUE)
+       )
+unzip("./data/data.zip",overwrite=TRUE,exdir="./data")
+
+# 2d. Read in the data
+data<-read.csv("./data/activity.csv",
+               header=T,
+               stringsAsFactors=F,
+               colClasses=c("numeric",rep("character",2)))
+```
+
+##### Step 3 - Process the data
+
+The data read in to R are processed and cleaned slightly to facilitate processing.
+
+
+```{r warning=FALSE}
+# 3a. Using the lubridate package, format the date as such
+data$date<-ymd(data$date)
+# 3b. Create a new variable that lists the day of the week
+data$day<-wday(data$date,label=T,abbr=F)
+# 3c. Create a factor variable for weekday/weekend categorisation
+data$week<-factor(x=ifelse(data$day %in% c("Saturday","Sunday")
+                           ,"Weekend"
+                           ,"Weekday")
+                  ,levels=c("Weekend","Weekday")
+                  )
+# 3d. Create a new field, "time" that transforms the "interval" field in to the appropriate time
+data$time<-ifelse(nchar(data$interval)==1,
+                  paste("00:00:0",data$interval,sep=""),
+                  ifelse(nchar(data$interval)==2,
+                         paste("00:00:",data$interval,sep=""),
+                  ifelse(nchar(data$interval)==3,
+                         paste("0",substr(data$interval,1,1),":",substr(data$interval,2,3),":00",sep=""),
+                  ifelse(nchar(data$interval)==4,
+                         paste(substr(data$interval,1,2),":",substr(data$interval,3,4),":00",sep=""),
+                         paste("")))))
+
+```
