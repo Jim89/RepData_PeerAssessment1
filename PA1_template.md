@@ -1,30 +1,67 @@
 # Stepping Through Time
 ### An analysis of personal movement data
-##### Jim Leach
+##### Jim Leach 
 *******************************************************************************
 
-### Introduction and Background
-This report has been created as part of the *Reproducible Research* MOOC offered by Johns Hopkins university on the Coursera website [here](https://class.coursera.org/repdata-004). 
+### Report Overview
+This report has been created for an assigment set as part of the *Reproducible Research* MOOC from Johns Hopkins university on [Coursera](https://class.coursera.org/repdata-004). 
 
-Briefly, the goal of this assignment was to take two month's worth of pedometer data for an anonymous individual and perform some brief summary and exploratory analysis on it in R. A full summary of the assigmnet can be found on the associated [GitHub repository](https://github.com/Jim89/RepData_PeerAssessment1). 
+The goal was to take two month's of pedometer data for an anonymous individual and perform some brief exploratory analysis using R. 
 
-The anaysis is broken down in to a number of steps, which are set out below:
+The following points had to be addressed:
 
-1. Load the data;
+* What is the distribution of total daily steps?
+* What is the distribution of steps per 5-minute interval within a day?
+* How much of the data is missing?
+* Does the distribution of total daily steps change if missing values are imputed?
+* What is the difference in activity between weekdays and weekends?
+
+Finally, it was a requirement to produce the analysis in a *reproducible* manner.This means that, given the same data and software, anyone could reproduce the analysis.
+
+This report will address each of these points and is structured as follows:
+
+* An overview of why this analysis is _reproducible_.
+* An overview of the analysis methods.
+* A presentation of the results of the analysis.
+
+#### Reproducible Analysis
+
+There are a number of factors that demonstrate the *reproducibility* of this report:
+
+* Package installation and loading is conditional - packages are installed and loaded as required.
+* The code contains steps to download and read in data. This limits manual steps.
+* The code is OS-neutral: wherever possible, it uses conditional logic to ensure compatibility with a range of operating systems.
+* Results are generated and stored to variables or external files automatically, so can be recalled later.
+* This report has written using RMarkdown and will automatically generate figures and report results - nothing has been hard-coded.
+
+
+*******************************************************************************
+### Methodology
+
+The methodology of the analysis was to break the code up in to discrete sections. These steps were:
+
+1. Obtain and load the data;
 2. Process the data;
 3. Calculate and chart daily average steps;
 4. Calculate and chart the average steps in 5 minute intervals throughout the day;
 5. Impute missing values in the data set and create a new, clean data set and repeat step 3 for the cleaned data; and
 6. Analyse differences in activity between weekdays and weekends.
 
-The following sections set out the approach taken to perform each of these steps.
 
-*******************************************************************************
-### Analysis Methodology
+The following sections set out the detailed approach for each stage of the analysis.
 
 ##### Step 0 - Preparing the R working environment - Packages
 
-A number of packages have been used and are, therefore, required for this analysis. To make the code more reproducible, conditional installation and subsequent loading of these packages is performed as part of the working script. This is achieved using the following code:
+A number of packages were used and are therefore required for this analysis. These packages were:
+
+* [lubridate](http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/)
+* [dplyr]((http://blog.rstudio.org/2014/01/17/introducing-dplyr/))
+* [ggplot2](http://ggplot2.org/)
+* [sqldf](http://www.r-bloggers.com/manipulating-data-frames-using-sqldf-a-brief-overview/)
+* [gridExtra](http://www.r-bloggers.com/extra-extra-get-your-gridextra/)
+* [scales](http://cran.r-project.org/web/packages/scales/index.html)
+
+Conditional installation and subsequent loading of these packages was achieved with:
 
     if(require("package name here",quietly=T)){
       print("loading "package name here"")
@@ -39,25 +76,15 @@ A number of packages have been used and are, therefore, required for this analys
       }
     }
     
-The packages used by this analysis are:
-
-* [lubridate](http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/)
-* [dplyr]((http://blog.rstudio.org/2014/01/17/introducing-dplyr/))
-* [ggplot2](http://ggplot2.org/)
-* [sqldf](http://www.r-bloggers.com/manipulating-data-frames-using-sqldf-a-brief-overview/)
-* [gridExtra](http://www.r-bloggers.com/extra-extra-get-your-gridextra/)
-* [scales](http://cran.r-project.org/web/packages/scales/index.html)
-
-For more information about any of these packages please see the documentation using `help(package="package name here")`.
+For more information about any of these packages, see their documentation using `help(package="package name here")`.
         
-For brevity, the conditional installation and loading of each package has been masked from this document.
-
 
 
 
 ##### Step 1 - Getting and loading the data
 
-The data for this analysis are stored on the [course website](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip). The analysis has automated the download and loading of the data in to R. This is done using:
+The data for this analysis are stored [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip). The download and loading of the data in to R was automated:
+
 
 ```r
 # 1a. Set the URL for the data
@@ -68,11 +95,14 @@ if(!file.exists("./data")){dir.create("./data",showWarnings = FALSE)}
 
 # 1c. Download and unzip the data - download method conditional on operating system
 if(Sys.info()["sysname"]=="Windows"){setInternet2(use = TRUE)}
-ifelse(Sys.info()["sysname"]=="Windows",
-       download.file(url=url,"./data/data.zip",quiet=TRUE),
-       download.file(url=url,"./data/data.zip",method="curl",quiet=TRUE)
-       )
-unzip("./data/data.zip",overwrite=TRUE,exdir="./data")
+if(!file.exists("./data/data.zip"))
+  {
+  ifelse(Sys.info()["sysname"]=="Windows",
+         download.file(url=url,"./data/data.zip",quiet=TRUE),
+         download.file(url=url,"./data/data.zip",method="curl",quiet=TRUE)
+         )
+  unzip("./data/data.zip",overwrite=TRUE,exdir="./data")
+  }
 
 # 1d. Read in the data
 data<-read.csv("./data/activity.csv",
@@ -83,9 +113,7 @@ data<-read.csv("./data/activity.csv",
 
 ##### Step 2 - Process the data
 
-The data read in to R are processed and cleaned slightly to facilitate processing.
-
-
+The data read in to R were cleaned to facilitate later processing.
 
 ```r
 # 2a. Using the lubridate package, format the date as such
@@ -112,9 +140,7 @@ data$time<-ifelse(nchar(data$interval)==1,
 
 ##### Step 3 - Summarising and reporting activity by day
 
-After loading and processing the data, the next step in the analysis is a summary of the data by day.
-
-The first step is to perform this summarisation of the data. This is done using the fantastic dplyr package:
+The data were summarised by day.This was done using the fantastic dplyr package:
 
 
 ```r
@@ -125,25 +151,7 @@ day_summary<-data %.%
              summarise(total_steps=sum(na.omit(steps)))
 ```
 
-Next, a chart of the total steps taken per day is created.
-
-```r
-# 3b. Make the histogram
-(ggplot(day_summary,aes(x=na.omit(total_steps)))
-+geom_histogram(binwidth=1000,fill="steelblue",color="grey")
-+theme_minimal()
-+xlab("Total Steps Per Day (Intervals of 1000)")
-+ylab("Count of Days")
-+ggtitle("Histogram of Total Steps Taken Per Day"))
-```
-
-![plot of chunk unnamed-chunk-5](./PA1_template_files/figure-html/unnamed-chunk-5.png) 
-
-It is clear that the majority of days show total steps of between approximately 7,50 and 15,000 steps - an impressive count given that 10,000 is often set as a challenging total!
-
-It's also interesting to note the number of days with a very low count (0 to 1000) of steps - it would be interesting to know if this is due to measurement error, or just a few lazy days.
-
-Finally in this section, the median and mean total steps per day is calculated:
+The median and mean total steps per day were calculated:
 
 ```r
 # 3c. Calculate the median and mean total steps per day
@@ -152,14 +160,11 @@ median_steps<-round(median(day_summary[,2]))
 mean_steps<-round(mean(day_summary[,2]))
 ```
 
-The median number of steps per day is 10395. Similarly, the mean number of steps taken per day is 9354.
-
+See the results section for these numbers.
 
 ##### Step 4 - Summarising and reporting activity by interval
 
-Next, the data is summarised intra-day by 5 minute time interval. This provides a good overview of where in a day the recorded steps are occurring.
-
-Again, the first step is to perform summarisation, this time on the time interval, but again using the ever-fantastic dplyr.The time interval is then converted to a time field, using the lubridate package.
+The initial summarisation on time was again done using dplyr. The time interval was then converted to a time data-type, using the lubridate package.
 
 ```r
 # 4a. Summarise the data by interval
@@ -171,7 +176,7 @@ interval_summary<-data.frame(
 interval_summary$time<-parse_date_time(interval_summary$time,orders="H:M:S")
 ```
 
-As part of the working for this analysis, it was found that there were significant portions of time (overnight) where no steps were recorded. As such, to facilite a better looking graph, these records were ignored. This was achieved by finding the first and last time steps were recorded:
+As part of the working for this analysis, it was found that there were significant portions of time where no steps were recorded. To facilitate a cleaner graph, these records were ignored. This was achieved by finding the first and last time steps were recorded:
 
 ```r
 # 4c. Create a row number than can be used as an index
@@ -184,25 +189,7 @@ last_data<-max(filter(interval_summary,average_steps!=0)$row)
 interval_summary<-select(interval_summary,-row)
 ```
 
-Once this was achieved, a chart of median steps over time was created:
-
-```r
-# plot line graph of average steps per interval
-ggplot(interval_summary[(first_data-12):(last_data+12),], # +/- 1 hour each end
-       aes(x=time,y=average_steps,group=1))+
-  geom_line(color="steelblue")+
-  xlab("Time")+
-  ylab("Average Steps")+
-  ggtitle("Average steps per 5 minute interval accross the day")+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-![plot of chunk unnamed-chunk-9](./PA1_template_files/figure-html/unnamed-chunk-9.png) 
-
-It appears that (as one might expect) there a two peaks of activity, one in the morning (on the way to work, perhaps) and one in the evening (returning home) with a small spike of activity right around lunch time. 
-
-Subsequently, it is possible to find the five minute interval that contains, on average, the most steps of any interval accross the day:
+Subsequently, the five minute interval that contained, on average, the most steps of any interval across the day was caclcuated:
 
 ```r
 max_interval<-filter(interval_summary,average_steps==max(average_steps))
@@ -210,15 +197,13 @@ interval<-substring(as.character(max_interval[,1]),11)
 steps<-max_interval[,2]
 rm(max_interval)
 ```
-
-The most number of steps is recorded in the five minute interval ending at :45:00, where it appears that, on average, the participant takes 60 steps.
-
+This value is reported in the results section below.
 
 ##### Step 5 - Imputing missing values
 
-When reading in data, it is often sensible to get an idea of the number of missing value in the variable(s) of interest. In this data, it is the steps per interval that is of interest.
+When reading in data, it is often sensible to get an idea of the number of missing values in the variable(s) of interest. In this analysis, it was the steps per interval that was of interest.
 
-The total number of missing values, and the proportion of the total that this represents are calculated:
+The total number of missing values, and the proportion of the total that this represents were calculated:
 
 ```r
 # 5a. Calculate number and proportion of missing values
@@ -230,12 +215,11 @@ prop<-percent(prop)
 
 The total number of missing values in the steps data is 2304. This represents 13.1% of the data. 
 
-In order to impute missing values, a granular approach was taken such that the median value for a given five minute interval was used to replace missing values in the data. 
+A granular approach was taken to impute missing values. The median value for a given five minute interval was used to replace missing values in the data. 
 
-This was done using the sqldf package, specifically the *coalesce* function in the SQL language. Coalesce takes the first non-NULL (or in R terms, the first non-NA) value in a vector of values and so is perfect for filling in missing data with something else.
+This was done using the sqldf package, specifically the *coalesce* function. Coalesce takes the first non-NULL value in a vector of values. It is highly useful for filling in missing data.
 
-As such, the median steps for a given 5 minute interval (calculated earlier in step 4) was joined to the original data, and the coalese function used to impute the missing values. All values from the original data are maintianed (including the weekend/weekday factor) and a new field containing the imputed values is added.
-
+The median value of steps for a given 5 minute interval was joined to the original data, and *coalesce* used to replace missing values.
 
 ```r
 # 5b. Recreate interval summary but leave time as character for the join:
@@ -254,19 +238,11 @@ data2<-sqldf("SELECT
               ON
                 data.time = med.time"
              )
-```
-
-```
-## Loading required package: tcltk
-```
-
-```r
-# 5d. Clean up the interval summary as it's no longer needed
+# 5d. Remove the second interval summary as it's no longer needed
 rm(interval_summary2)
 ```
 
-
-To get the values for the median and mean steps using the imputed data set, the same day-wise summary was performed (again, using dplyr):
+Values for the median and mean steps using the imputed data set were calculated. This was done with the same day-wise summary performed previously:
 
 ```r
 # 5e. Perform summarisation by day
@@ -276,7 +252,7 @@ day_summary_clean<- data2 %.%
                     summarise(total_steps=sum(na.omit(steps)))
 ```
 
-The median and mean values for daily steps were recalculated:
+The median and mean values for daily steps were recalculated using the imputed data:
 
 ```r
 # 5f. Calculate the new values
@@ -286,35 +262,17 @@ mean_steps_clean<-round(mean(day_summary_clean[,2]))
 # 5g. Assess the differences
 med_diff<-diff(c(median_steps,median_steps_clean))
 mean_diff<-diff(c(mean_steps,mean_steps_clean))
-med_diff_text<-if(med_diff>0){"greater"}else if(med_diff<0){"less"}else{"different"}
-mean_diff_text<-if(mean_diff>0){"greater"}else if(mean_diff<0){"less"}else{"different"}
+med_diff_text<-if(med_diff>0){"greater than"}else if(med_diff<0){"less than"}else{"different to"}
+mean_diff_text<-if(mean_diff>0){"greater than"}else if(mean_diff<0){"less than"}else{"different to"}
 ```
-
-Using the imputed data set, it is the case that the median steps per interval is 10395. This is 0 steps different  from the value using missing data.
-
-Using the imputed data set, it is the case that the mean steps per interval is 9354. This is 0 steps different  from the value using missing data.
-
-A histogram of the daily activity using the imputed data was plotted. Unsurprisingly, it is no different from the previously created histogram (save for color used here for purely artistic purposes):
-
-```r
-# 5h. Create histogram of daily activity with imputed values
-ggplot(day_summary_clean,aes(x=na.omit(total_steps)))+
- geom_histogram(binwidth=1000,fill="firebrick",color="grey")+
- theme_minimal()+
- xlab("Total Steps Per Day (Intervals of 1000)")+
- ylab("Count of Days")+
- ggtitle("Histogram of total steps per day, with imputed values for missing data")
-```
-
-![plot of chunk unnamed-chunk-15](./PA1_template_files/figure-html/unnamed-chunk-15.png) 
 
 ##### Step 6 - Analysing differences in weekdays and weekends
 
 The final step of this analysis was to plot the average steps per 5 minute interval across the day, split by weekends and weekdays. 
 
-The weekend/weekday factor has already been created (see step 2) and is present in the imputed data set that is used for this step. 
+The weekend/weekday factor was already created and is present in the imputed data set that was used for this step. 
 
-The first step in this exercise was therefore to create the summary by interval, including the weekday/weekend factor into the grouping.
+A further summary by interval was performed, including the weekday/weekend factor into the grouping.
 
 
 ```r
@@ -325,7 +283,7 @@ interval_summary_weeks<- data.frame(
                         summarise(average_steps=median(na.omit(steps))))
 ```
 
-Two new data sets were then created, the first containing step data for weekends only, which was then plotted and the plot saved to a variable.
+Two new data sets were then created, the first containing step data for weekends only:
 
 ```r
 # 6b. Subset to weekend data
@@ -337,20 +295,9 @@ weekend$row<-seq(1:nrow(weekend))
 first_data_weekend<-min(filter(weekend,average_steps!=0)$row)
 last_data_weekend<-max(filter(weekend,average_steps!=0)$row)
 weekend<-select(weekend,-row)
-
-# 6c. Construct the plot for weekend data
-weekend_plot<-
-ggplot(weekend[(first_data_weekend-12):(last_data_weekend+12),],
-       aes(x=time,y=average_steps,group=1))+
-  geom_line(color="darkgreen")+
-  xlab("Time")+
-  ylab("Avg. Steps")+
-  ggtitle("Weekends")+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-The second data set contained step datat for weekends only. A similar plot was also made and the plot saved to a variable:
+The second data set contained step data for weekdays only:
 
 ```r
 # 6d. Subset to week data
@@ -362,8 +309,95 @@ week$row<-seq(1:nrow(week))
 first_data_week<-min(filter(week,average_steps!=0)$row)
 last_data_week<-max(filter(week,average_steps!=0)$row)
 week<-select(week,-row)
+```
 
-# 6e. Construct the plot for the week data
+Finally, these two plots were brought together using the gridExtra package to create the final plot to assess differences in weekend and weekday activity. This plot can be seen as figure 4 in the results section below.
+
+*******************************************************************************
+
+
+### Results
+
+#### Day-Wise Analysis with *Raw* Data:
+##### Figure 1 - Distribution of total steps per day
+
+```r
+# 3b. Make the histogram
+ggplot(day_summary,aes(x=na.omit(total_steps)))+
+geom_histogram(binwidth=1000,fill="steelblue",color="grey")+
+theme_minimal()+
+xlab("Total Steps Per Day (Intervals of 1000)")+
+ylab("Count of Days")+
+ggtitle("Histogram of Total Steps Taken Per Day")
+```
+
+![plot of chunk figure1](./PA1_template_files/figure-html/figure1.png) 
+
+
+Figure 1 shows that the majority of days have total steps of between approximately 7,500 and 15,000 steps - an impressive count!
+
+It's also interesting to note the number of days with a very low count (0 to 1000) of steps - it would be interesting to know if this is due to measurement error, or just a few lazy days.
+
+Further, the computed median number of total steps per day is *10395*. Similarly, the computed mean number of total steps taken per day is *9354*.
+
+#### Interval-Wise Analaysis with *Raw* Data:
+##### Figure 2 - Distribution of median steps within a day
+
+```r
+# plot line graph of average steps per interval
+ggplot(interval_summary[(first_data-12):(last_data+12),], # +/- 1 hour each end
+       aes(x=time,y=average_steps,group=1))+
+  geom_line(color="steelblue")+
+  xlab("Time")+
+  ylab("Average Steps")+
+  ggtitle("Average steps per 5 minute interval accross the day")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+![plot of chunk figure2](./PA1_template_files/figure-html/figure2.png) 
+
+Figure 2 shows that there are two peaks of activity, one in the morning and one in the evening with a small spike of activity around lunch time. N.B. The data for the chart were subsetted using the first and last times with activity calculated above.
+
+The most number of steps is recorded in the five minute interval ending at  08:45:00, where it appears that, on average, the participant took _60_ steps.
+
+### Missing Data
+The total number of missing values in the steps data is *2304*. This represents *13.1%* of the data. 
+
+Once missing values had been imputed using median activity, the median steps per interval is *10395*. This is *0* steps different to the value using missing data.
+
+Using the imputed data set, it is the case that the mean steps per interval is *9354*. This is *0* steps different to the value using missing data.
+
+##### Figure 3 - Distribution of total steps per day using *imputed* data
+
+```r
+# 5h. Create histogram of daily activity with imputed values
+ggplot(day_summary_clean,aes(x=na.omit(total_steps)))+
+ geom_histogram(binwidth=1000,fill="firebrick",color="grey")+
+ theme_minimal()+
+ xlab("Total Steps Per Day (Intervals of 1000)")+
+ ylab("Count of Days")+
+ ggtitle("Histogram of total steps per day, with imputed values for missing data")
+```
+
+![plot of chunk figure3](./PA1_template_files/figure-html/figure3.png) 
+
+### Interval-wise Analysis with *Imputed* Data - Weekends vs Weekdays
+##### Figure 4 - Distribution of median steps within a day, weekends vs weekdays
+
+```r
+# Construct the plot for weekend data
+weekend_plot<-
+ggplot(weekend[(first_data_weekend-12):(last_data_weekend+12),],
+       aes(x=time,y=average_steps,group=1))+
+  geom_line(color="darkgreen")+
+  xlab("Time")+
+  ylab("Avg. Steps")+
+  ggtitle("Weekends")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Construct the plot for the week data
 week_plot<-
   ggplot(week[(first_data_week-12):(last_data_week+12),], 
          aes(x=time,y=average_steps,group=1))+
@@ -373,11 +407,7 @@ week_plot<-
   ggtitle("Weekdays")+
   theme_minimal()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
 
-Finally, these two plots were brought togeher using the gridExtra package to create the final plot to assess differences in weekend and weekday activity:
-
-```r
 grid.arrange(week_plot,
              weekend_plot,
              ncol=1,
@@ -385,6 +415,16 @@ grid.arrange(week_plot,
              main="Average Steps Per 5 Minute Interval")
 ```
 
-![plot of chunk unnamed-chunk-19](./PA1_template_files/figure-html/unnamed-chunk-19.png) 
+![plot of chunk figure4](./PA1_template_files/figure-html/figure4.png) 
 
-It is interesting to note the differences in activity between the weekends and weekdays. Overall, it appears that weekends have more activity, and that that activity is more distribted througout the day. 
+
+
+It is interesting to note the differences in activity between the weekends and weekdays. Overall, it appears that weekends have more activity, and that that activity is more distributed throughout the day. 
+
+********************************************************************************
+
+### References and Contact
+
+The complete code and documentation for this assignment can be found on [GitHub](https://github.com/Jim89/RepData_PeerAssessment1) repository. 
+
+The author of this report can be contacted on [twitter](https://twitter.com/leach_jim) 
