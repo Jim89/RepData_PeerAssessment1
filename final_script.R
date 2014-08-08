@@ -66,7 +66,7 @@ if(require("gridExtra",quietly=T)){
     stop("could not install gridExtra")
   }
 }
-# 5. scales
+# 6. scales
 if(require("scales",quietly=T)){
   print("loading scales")
 } else {
@@ -85,18 +85,19 @@ if(require("scales",quietly=T)){
 # 1a. Set the URL for the data
 url<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 
-# 1bi. Conditionally create a directory in the working directory to store the data
+# 1b. Conditionally create a directory in the working directory to store the data
 if(!file.exists("./data")){dir.create("./data",showWarnings = FALSE)}
-# 1bii. Conditionally create a directory in the working directory to store the plots
-if(!file.exists("./figures")){dir.create("./figures",showWarnings = FALSE)}
 
 # 1c. Download and unzip the data - download method conditional on operating system
 if(Sys.info()["sysname"]=="Windows"){setInternet2(use = TRUE)}
-ifelse(Sys.info()["sysname"]=="Windows",
-       download.file(url=url,"./data/data.zip",quiet=TRUE),
-       download.file(url=url,"./data/data.zip",method="curl",quiet=TRUE)
-)
-unzip("./data/data.zip",overwrite=TRUE,exdir="./data")
+if(!file.exists("./data/data.zip"))
+{
+  ifelse(Sys.info()["sysname"]=="Windows",
+         download.file(url=url,"./data/data.zip",quiet=TRUE),
+         download.file(url=url,"./data/data.zip",method="curl",quiet=TRUE)
+  )
+  unzip("./data/data.zip",overwrite=TRUE,exdir="./data")
+}
 
 # 1d. Read in the data
 data<-read.csv("./data/activity.csv",
@@ -140,11 +141,11 @@ day_summary<-data %.%
 # 3b. Make the histogram
 png("./figures/figure1.png",width=720,height=720)
 ggplot(day_summary,aes(x=na.omit(total_steps)))+
- geom_histogram(binwidth=1000,fill="steelblue",color="grey")+
- theme_minimal()+
- xlab("Total Steps Per Day (Intervals of 1000)")+
- ylab("Count of Days")+
- ggtitle("Histogram of Total Steps Taken Per Day")
+  geom_histogram(binwidth=1000,fill="steelblue",color="grey")+
+  theme_minimal()+
+  xlab("Total Steps Per Day (Intervals of 1000)")+
+  ylab("Count of Days")+
+  ggtitle("Histogram of Total Steps Taken Per Day")
 dev.off()
 
 # 3c. Calculate the median and mean total steps per day - used for reporting
