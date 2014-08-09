@@ -4,7 +4,7 @@
 *******************************************************************************
 
 ### Report Overview
-This report has been created for an assigment set as part of the *Reproducible Research* MOOC from Johns Hopkins university on [Coursera](https://class.coursera.org/repdata-004). 
+This report has been created for an assignment set as part of the *Reproducible Research* MOOC from Johns Hopkins university on [Coursera](https://class.coursera.org/repdata-004). 
 
 The goal was to take two month's of pedometer data for an anonymous individual and perform some brief exploratory analysis using R. 
 
@@ -55,7 +55,7 @@ The following sections set out the detailed approach for each stage of the analy
 A number of packages were used and are therefore required for this analysis. These packages were:
 
 * [lubridate](http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/)
-* [dplyr]((http://blog.rstudio.org/2014/01/17/introducing-dplyr/))
+* [dplyr](http://blog.rstudio.org/2014/01/17/introducing-dplyr/)
 * [ggplot2](http://ggplot2.org/)
 * [sqldf](http://www.r-bloggers.com/manipulating-data-frames-using-sqldf-a-brief-overview/)
 * [gridExtra](http://www.r-bloggers.com/extra-extra-get-your-gridextra/)
@@ -189,7 +189,7 @@ last_data<-max(filter(interval_summary,average_steps!=0)$row)
 interval_summary<-select(interval_summary,-row)
 ```
 
-Subsequently, the five minute interval that contained, on average, the most steps of any interval across the day was caclcuated:
+Subsequently, the five minute interval that contained, on average, the most steps of any interval across the day was calculated:
 
 ```r
 max_interval<-filter(interval_summary,average_steps==max(average_steps))
@@ -359,7 +359,7 @@ ggplot(interval_summary[(first_data-12):(last_data+12),], # +/- 1 hour each end
 
 Figure 2 shows that there are two peaks of activity, one in the morning and one in the evening with a small spike of activity around lunch time. N.B. The data for the chart were subsetted using the first and last times with activity calculated above.
 
-The most number of steps is recorded in the five minute interval ending at  08:45:00, where it appears that, on average, the participant took _60_ steps.
+The most number of steps is recorded in the five minute interval ending at :45:00, where it appears that, on average, the participant took _60_ steps.
 
 ### Missing Data
 The total number of missing values in the steps data is *2304*. This represents *13.1%* of the data. 
@@ -425,6 +425,6 @@ It is interesting to note the differences in activity between the weekends and w
 
 ### References and Contact
 
-The complete code and documentation for this assignment can be found on [GitHub](https://github.com/Jim89/RepData_PeerAssessment1) repository. 
+The complete code and documentation for this assignment can be found on the [GitHub](https://github.com/Jim89/RepData_PeerAssessment1) repository. 
 
-The author of this report can be contacted on [twitter](https://twitter.com/leach_jim) 
+The author of this report can be contacted on [twitter](https://twitter.com/leach_jim).
